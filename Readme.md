@@ -48,10 +48,9 @@ None of this happens without the team
 
 Deepest gratitude to my teammates: Md Sohel Rana, Faisal Islam Fahad, Naushin Sultana Mim, and Jerin — for every late debugging session, every brilliant insight, and every moment of refusing to settle. I'm incredibly proud of what we built together.
 
-Edited Readme.md
-Listed directory IOT%20Project
-Viewed predict.py:1-141
-Created requirements.txt
+![Labels] model/fruit_quality/labels.jpg
+![Confusing Matrix] confusing_matrix.png
+![Train History] train_history.png
 
 To run this project on a different machine, you need to clone the project and set up a Python environment with the required dependencies. I've created a `requirements.txt` file in the project folder to make this easy!
 
