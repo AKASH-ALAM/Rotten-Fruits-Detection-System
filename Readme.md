@@ -1,31 +1,29 @@
-We built a real-time AI fruit inspector using a $5 camera — here's the full story.
+# Smart IoT System for Fruit Quality Detection Using Deep Learning
 
-Most people think cutting-edge AI requires expensive hardware and enterprise infrastructure. We proved otherwise.
-
-Our team just completed an end-to-end IoT Fruit Quality Detection System — a full pipeline that goes from a budget ESP32-CAM on the edge, all the way to a deployed AI model responding through a Telegram bot. Here's what we learned building it from scratch:
+An end-to-end, ultra-low-cost IoT computer vision system designed to automate fruit quality inspection. This project proves that highly accurate, multi-object enterprise-grade AI inspection can be achieved on budget edge hardware (a $5 camera) without heavy local GPU processing. 
 
 ---
 
-We started with failure (and it was worth it)
+## 🚀 Project Overview
 
-Our first model was MobileNetV2 — a solid classifier, but completely lost the moment multiple fruits appeared in one frame. It couldn't localize. It couldn't separate. It tried to classify the whole image as one object.
+Fruit spoilage is a critical challenge in agricultural supply chains. Existing automated solutions often rely on expensive industrial cameras or struggle with overlapping fruits. This project provides a decentralized, low-cost system capable of multi-object detection and real-time quality classification.
 
-That failure pushed us to YOLOv8 Nano — a lightning-fast object detection model built for exactly this: detecting and labeling multiple objects simultaneously with bounding boxes, even on resource-constrained hardware.
-
----
-
-Three challenges that nearly broke us
-
-• Dirty data: Multi-fruit clusters in training images confused the model badly. We manually cleaned the dataset — and the accuracy jump was immediate and dramatic.
-• Cloud latency: Deploying raw PyTorch .pt weights on Hugging Face's free tier caused brutal delays and timeouts. Converting to ONNX eliminated the PyTorch runtime entirely — response time dropped to 3–4 seconds.
-• Hardware realities: The ESP32-CAM's OV2640 sensor has poor white-balance and unpredictable lighting. We simulated this during training with heavy HSV jitter augmentation — and it paid off in real-world accuracy.
+The entire ecosystem is controlled via an asynchronous Telegram Bot interface, allowing users to trigger hardware captures remotely and receive immediate, annotated quality reports directly to their phones or desktops.
 
 ---
 
-The results speak for themselves
+## ✨ Key Features & Performance
 
-mAP@50: 98.97% | Precision: 98.17% | Recall: 97.79%
-Nearly 99% mAP on an 8-class detection problem, running at the edge on a $5 camera. We were honestly shocked.
+Initial iterations utilizing MobileNetV2 struggled to localize and separate multiple fruits in a single frame. The architecture was pivoted to a custom YOLOv8 Nano model trained on a manually cleaned dataset of 8 distinct classes of fresh and spoiled fruits. 
+
+To overcome cloud latency and timeouts, the PyTorch `.pt` weights were optimized into the ONNX format. This eliminated framework overhead and reduced inference latency on a free-tier cloud CPU from over 15 seconds down to just 3-4 seconds.
+
+| Metric | Score |
+| :--- | :--- |
+| **mAP@50** | 98.97% |
+| **Precision** | 98.17% |
+| **Recall** | 97.79% |
+| **Inference Speed** | 3-4 seconds (Cloud CPU) |
 
 ### Data & Labels
 ![Labels](model/fruit_quality/labels.jpg)
@@ -36,93 +34,97 @@ Nearly 99% mAP on an 8-class detection problem, running at the edge on a $5 came
 ![Confusion Matrix](model/fruit_quality/confusion_matrix_normalized.png)
 ![Validation Predictions](model/fruit_quality/val_batch2_pred.jpg)
 
+---
+
+## 🛠️ Technology Stack
+
+| Component | Technologies Used |
+| :--- | :--- |
+| **Hardware** | ESP32-CAM Development Board, OV2640 2MP Camera Sensor |
+| **Deep Learning** | YOLOv8 Nano (trained on Intel Arc A750 GPU), ONNX Runtime |
+| **Backend** | Python 3.10, FastAPI, Uvicorn, OpenCV, httpx, asyncio |
+| **Cloud Infrastructure**| Hugging Face Spaces (Free Tier CPU) |
+| **User Interface** | Telegram Bot API |
+| **Edge Firmware** | C++ (Arduino IDE), WiFiClientSecure, HTTPClient |
 
 ---
 
-The full stack
+## ⚙️ System Architecture
 
-• Edge device: ESP32-CAM + OV2640 2MP sensor
-• Detection model: YOLOv8 Nano — 50 epochs, 320×320, batch 64
-• Training: Intel Arc A750 GPU (with custom XPU patches for Ultralytics)
-• Deployment: Hugging Face Spaces (free tier) via ONNX Runtime
-• Interface: Telegram Bot — manual + automatic alert modes
+The operational flow is designed asynchronously to prevent blocking and handle hardware timeouts:
 
----
-
-The real-world potential
-
-This isn't just a student project. The same architecture scales directly to conveyor-belt sorting systems, cold-chain logistics monitoring, and automated quality grading for food suppliers — all at a fraction of traditional system costs.
+1. The user sends a `/capture` command via the Telegram Bot.
+2. The FastAPI backend receives the command and sets a state trigger flag.
+3. The ESP32-CAM (polling every 2 seconds) detects the flag, wakes up, clears stale buffers, and captures a QVGA image.
+4. The edge device compresses the frame to JPEG and pushes the payload via HTTP POST to the cloud.
+5. The ONNX-optimized YOLOv8 engine processes the image and calculates confidence scores.
+6. OpenCV draws bounding boxes, formats a Markdown statistical summary, and pushes the final report back to the user.
 
 ---
 
-None of this happens without the team
+## 💻 Installation & Setup Guide
 
-Deepest gratitude to my teammates: Md Sohel Rana, Faisal Islam Fahad, Naushin Sultana Mim, and Jerin — for every late debugging session, every brilliant insight, and every moment of refusing to settle. I'm incredibly proud of what we built together.
+### 1. Model & Software Environment
+To run this project on a local machine (Windows, Mac, or Linux), follow these steps:
 
-To run this project on a different machine, you need to clone the project and set up a Python environment with the required dependencies. I've created a `requirements.txt` file in the project folder to make this easy!
+* Download Python 3.10 or newer (ensure you check "Add python.exe to PATH" during installation on Windows).
+* Download the dataset from Mendeley: [Rotten Fruit Detector Dataset (v3)](https://data.mendeley.com/datasets/xkbjx8959c/2).
+* Open your terminal and create an isolated virtual environment:
 
-Here is the step-by-step guide you can follow (or share with your teammates) to get the AI model running on **any Windows, Mac, or Linux computer**.
-
-### Download dataset from [Mendeley](https://data.mendeley.com/datasets/xkbjx8959c/2)
-
-### Step 1: Install Python
-Ensure Python is installed on the new machine. 
-1. Download Python 3.10 or newer from [python.org](https://www.python.org/downloads/).
-2. **Important for Windows:** During installation, make sure to check the box that says 
-    **"Add python.exe to PATH"** before clicking Install.
-
-### Step 2: Open the Terminal and create a Virtual Environment
-Navigate to the copied project folder in your terminal (Command Prompt/PowerShell on Windows, or Terminal on Mac/Linux). Run the following commands to create and activate an isolated environment:
-
-**On Windows:**
 ```bash
+# Windows
 python -m venv venv
 venv\Scripts\activate
-```
 
-**On Mac/Linux:**
-```bash
+# Mac/Linux
 python3 -m venv venv
 source venv/bin/activate
 ```
-*You will know it worked if you see `(venv)` at the start of your terminal prompt.*
 
-### Step 3: Install Dependencies
-With your virtual environment activated, install all the required AI packages using the `requirements.txt` file:
+* Install the required AI packages (this installs `ultralytics`, `opencv-python`, and `onnxruntime`):
+
 ```bash
 pip install -r requirements.txt
 ```
-*This will automatically install `ultralytics`, `opencv-python`, and `onnxruntime` (which is necessary to run your fast `.onnx` model).*
 
-### Step 4: Test the Model!
-Once the installation is complete, you can test if the model works on the new machine by running the prediction script on a sample image:
+* Test the model on a local image (the `--show` flag will pop up a window with bounding boxes):
 
 ```bash
 python predict.py "1.jpg" --show
 ```
-- Replace `"1.jpg"` with the path to any test image you brought over.
-- The `--show` flag will pop up a window displaying the YOLOv8 bounding boxes on the fruit.
-- If you use `--save` instead of `--show`, it will save the heavily annotated image into a newly created `runs/` folder.
 
-***
+### 2. Hardware Pipeline (ESP32-CAM)
+To connect the physical camera to your network:
+* Plug the ESP32-CAM into your computer using an ESP32-CAM-MB micro-USB shield.
+* Open the Arduino IDE.
+* Update the Wi-Fi credentials (SSID and Password) to your local router in the `ESP-32_Flash_File.cpp` file.
+* Flash the code to the board.
 
-### (Optional) What about the Telegram Bot & ESP32-CAM?
-If you are moving the *entire* hardware pipeline to a new network:
-1. **ESP32-CAM:** You will need to plug the ESP32-CAM into your computer, open Arduino IDE, flash your esp-32 cam with ESP-32_Flash_File.cpp, and update the Wi-Fi credentials (SSID and Password) to the new machine's local Wi-Fi router, and re-flash the board.
+### 3. Telegram Bot Configuration
+To set up your own remote UI:
+* Open Telegram and search for "BotFather".
+* Send the `/newbot` command and provide a name and username (e.g., `Rotten Fruit Detector`).
+* Copy the generated `BOT TOKEN`.
+* Install the specific bot libraries in your environment:
 
-2. **Telegram Bot Server:** 
-    Step 1: Create Telegram Bot
-    Open Telegram
-    Search "BotFather"
-    Send:
-    /start
-    /newbot
-    Give:
-    Name: Rotten Fruit Detector
-    Username: something_bot
+```bash
+pip install python-telegram-bot inference pillow
+```
 
-   You will get:
+---
 
-    BOT TOKEN = 123456:ABC-XYZ...
-    Step 2: Install Required Libraries
-    pip install python-telegram-bot inference pillow
+## 🚧 Limitations & Future Work
+
+* **Cloud Sleep States:** The current deployment relies on the Hugging Face Free Tier, which imposes a "cold start" sleep state after 48 hours of inactivity. Future iterations will migrate to a dedicated DigitalOcean App Platform container to eliminate this delay.
+* **Network Dependency:** The system strictly requires a 2.4GHz Wi-Fi connection, making deep-field agricultural deployment challenging. Future hardware will integrate a custom PCB with a battery management system and a GSM/LTE module for remote operation.
+* **Dataset Expansion:** The model will be continuously trained on expanded datasets to include more regional fruit classifications.
+
+---
+
+## 👥 Project Team
+
+This architecture scales directly to conveyor-belt sorting systems and cold-chain logistics monitoring at a fraction of traditional costs. None of this was possible without the dedication of the team. 
+
+**Supervised by:** Sayefa Arafah Arpona (Lecturer, Department of CSE, Bangladesh University of Business and Technology)
+
+**Developed by:** Md. Sohel Rana, Md. Labu Miah, Faysal Islam Fahad, Naushin Sultana Mim, and Mst. Milhan Jannat Jerin.
