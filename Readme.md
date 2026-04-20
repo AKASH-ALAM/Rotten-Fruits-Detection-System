@@ -127,4 +127,4 @@ This architecture scales directly to conveyor-belt sorting systems and cold-chai
 
 **Supervised by:** Sayefa Arafah Arpona (Lecturer, Department of CSE, Bangladesh University of Business and Technology)
 
-**R&D by:** [Sohel Rana](https://github.com/mr-sohel), Faysal Islam Fahad, Naushin Sultana Mim, and Mst. Milhan Jannat Jerin.
+**R&D by:** [Sohel Rana](https://github.com/mr-sohel), [Faysal Islam Fahad](https://github.com/faysal-islam-fd), Naushin Sultana MiMi, and Mst. Milhan Jannat Jerin.
